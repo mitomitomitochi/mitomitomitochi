@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3Dモデル「ピューマのぷまちゃん」対応アイテム一覧</title>
+    <!-- Tailwind CSSを読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fontsを読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* フォント設定 */
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* スクロールバーのスタイル（任意） */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <!-- ヘッダー部分 -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">
+                3Dモデル「ピューマのぷまちゃん」対応アイテムリスト
+            </h1>
+            <p class="text-gray-400">
+                <!-- ↓ ここの説明文を自由に変更してください -->
+                このサイトは、アバター「ピューマのぷまちゃん」に対応した衣装やアクセサリーなどをまとめた非公式サイトです。
+            </p>
+        </header>
+
+        <!-- フィルターと検索機能 -->
+        <div class="mb-8 p-4 bg-gray-800 rounded-lg shadow-lg sticky top-4 z-10">
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- 検索ボックス -->
+                <div class="relative flex-grow">
+                    <input type="text" id="searchInput" placeholder="アイテム名で検索..." class="w-full bg-gray-700 text-white rounded-md py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <svg class="w-5 h-5 text-gray-400 absolute top-1/2 left-3 transform -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <!-- カテゴリフィルター -->
+                <div id="category-filters" class="flex flex-wrap gap-2 justify-center">
+                    <!-- カテゴリボタンはJavaScriptで生成されます -->
+                </div>
+            </div>
+        </div>
+
+        <!-- アイテム一覧を表示するグリッド -->
+        <div id="item-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- アイテムカードはJavaScriptでここに挿入されます -->
+        </div>
+        
+        <!-- アイテムが見つからない場合のメッセージ -->
+        <div id="no-results" class="text-center py-16 text-gray-500 hidden">
+            <h2 class="text-2xl font-bold mb-2">アイテムが見つかりません</h2>
+            <p>検索条件を変更してお試しください。</p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- データ編集ここから ---
+
+        // お手元のCSVファイルの中身をコピーして、下のバッククォート（`）の間に貼り付けてください。
+        // 各行が1つのアイテムに対応します。
+        // 例:
+        // アイテム名,ショップリンク,写真リンク,値段,種類
+        // アイテム名2,ショップリンク2,写真リンク2,値段2,種類2
+        const csvData = `
+BoyishShark,https://booth.pm/ja/items/6721318,https://booth.pximg.net/10bdd640-f127-45ef-8033-84b9eb4d44de/i/6721318/1c3f6385-b422-41ea-82f3-b18c2fe4e608.png,1200,衣装
+うさずきん,https://booth.pm/ja/items/7445638,https://booth.pximg.net/1cfd9a38-373d-4897-850b-ca13686f8751/i/7445638/6356ebfc-7312-4dab-91fa-1e841ce4fb36_base_resized.jpg,600,衣装
+ゴシックメイド,https://booth.pm/ja/items/7239821,https://booth.pximg.net/b9a383f3-d476-4ff1-ad96-68ba6e764440/i/7239821/86b739a4-f3da-402e-8138-186b9387c3a9_base_resized.jpg,1800,衣装
+ぱすてるセーラー,https://booth.pm/ja/items/6959079,https://booth.pximg.net/b9a383f3-d476-4ff1-ad96-68ba6e764440/i/6959079/6f57b3e6-73ef-45f9-adf0-444675e7ef49_base_resized.jpg,2200,衣装
+すいさい,https://booth.pm/ja/items/7083753,https://booth.pximg.net/fe8aaba7-6df3-4109-a918-c72dd09f0005/i/7083753/8f61804b-e30b-4a14-b1a8-e88879720aec_base_resized.jpg,1000,衣装
+星屑,https://booth.pm/ja/items/7350302,https://booth.pximg.net/418b1964-9fad-46c7-a5d8-e0da44b37028/i/7350302/f1ea1998-261c-4157-be87-080de67916d6_base_resized.jpg,1800,衣装
+ぷまちゃん　おうえんせっと,https://booth.pm/ja/items/7486554,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/7486554/f3c3a4f7-0fbb-439e-9e31-5d5c4c821691_base_resized.jpg,5000,衣装
+小花,https://booth.pm/ja/items/7463217,https://booth.pximg.net/b44706df-44d9-4c6f-aec2-08c83ee31103/i/7463217/7b2cf403-e7f0-49bf-a777-8eaad6720454_base_resized.jpg,0,衣装
+ClasSneakers,https://booth.pm/ja/items/6939061,https://booth.pximg.net/ee2430eb-08bb-48ca-b33f-1728b38f1d15/i/6939061/8a55dcbc-28b4-40e1-a232-902a16826664_base_resized.jpg,800,衣装
+Atumn cloth,https://booth.pm/ja/items/7434273,https://booth.pximg.net/47f25379-f64e-44b3-af06-b88438063a9a/i/7434273/d2f22cc1-62f2-43c0-9084-621db0794889_base_resized.jpg,1300,衣装
+えんじぇる☆ジャージ,https://booth.pm/ja/items/7366547,https://booth.pximg.net/f63c5140-8342-48e1-948d-4cf26f5ddf34/i/7366547/e294246d-e7e9-434e-a3fe-868b92663c01_base_resized.jpg,580,衣装
+ぷまちゃん3点セット,https://booth.pm/ja/items/7488940,https://booth.pximg.net/353e6ea3-8d6c-42e1-9ab2-476454d2993f/i/7488940/1d5abd9d-2a63-4f1f-a2dc-0abd3e87264a_base_resized.jpg,3200,衣装
+星明かりのルームドレス,https://booth.pm/ja/items/7379812,https://booth.pximg.net/54e2911e-5b31-41de-9b93-49112008139e/i/7379812/61190340-b00d-469b-b23c-ac14fe114820_base_resized.jpg,1200,衣装
+和服メイド,https://booth.pm/ja/items/6754710,https://booth.pximg.net/54e2911e-5b31-41de-9b93-49112008139e/i/6754710/8a2aeb61-50ea-46bb-9c91-7791e51a1737_base_resized.jpg,800,衣装
+制服 M.E.O.W,https://booth.pm/ja/items/6827828,https://booth.pximg.net/54e2911e-5b31-41de-9b93-49112008139e/i/6827828/05a89df3-3eec-4c9a-bfc3-2d2627235e88_base_resized.jpg,1000,衣装
+Any Way!,https://booth.pm/ja/items/7077685,https://booth.pximg.net/dd06db72-a504-4fd2-a117-9a0708877416/i/7077685/45722698-cf24-43ae-951d-7aecd08609ae_base_resized.jpg,800,衣装
+ときめきルームウェア,https://booth.pm/ja/items/6981641,https://booth.pximg.net/4595c6eb-ff9b-4173-b4b6-2ec99822680e/i/6981641/09a22932-8afb-4998-af45-fca685aa5ddd_base_resized.jpg,1000,衣装
+もこっとルームウェア,https://booth.pm/ja/items/7484793,https://booth.pximg.net/b6b22b6d-2c56-472e-80a9-64be20625265/i/7484793/34d56720-9aea-4752-9274-c2d542e13542_base_resized.jpg,1200,衣装
+振袖パーカー,https://booth.pm/ja/items/5298514,https://booth.pximg.net/c5f07bf0-8b84-476c-8482-585249aba6c1/i/5298514/2bfbe411-6da1-49e6-8bd5-eb2e2f1a3cb5_base_resized.jpg,2200,衣装
+RabbitGear:Voltage ,https://booth.pm/ja/items/5759070,https://booth.pximg.net/c5f07bf0-8b84-476c-8482-585249aba6c1/i/5759070/9c3a64a9-1289-42ab-b9b3-716b0189a9d5_base_resized.jpg,1100,衣装
+GOTHIC EYES,https://booth.pm/ja/items/6112144,https://booth.pximg.net/c5f07bf0-8b84-476c-8482-585249aba6c1/i/6112144/3117c70a-3bb5-46dd-991c-0b508a50f48f_base_resized.jpg,2200,衣装
+Chain Earring,https://booth.pm/ja/items/7460235,https://booth.pximg.net/cdf2346d-e088-4e71-8af0-9e84ffeb6f76/i/7460235/040d946f-edf4-4404-9aa8-896c95288a9c_base_resized.jpg,500,アクセサリー
+舌ピアス,https://booth.pm/ja/items/6936346,https://booth.pximg.net/8ab8b09a-4854-4e18-bb8d-30995b9176f8/i/6936346/2456b093-beb6-4677-bef8-29830c6341b5_base_resized.jpg,500,アクセサリー
+Monocle,https://booth.pm/ja/items/6686704,https://booth.pximg.net/cdf2346d-e088-4e71-8af0-9e84ffeb6f76/i/6686704/40f50850-bda2-4a37-8eba-c8476f7b3fba_base_resized.jpg,500,アクセサリー
+UnderRimGlasses,https://booth.pm/ja/items/7153295,https://booth.pximg.net/cdf2346d-e088-4e71-8af0-9e84ffeb6f76/i/7153295/69834cd0-bf88-4ca0-8fda-adbe872d4e1a_base_resized.jpg,500,アクセサリー
+流星の月輪,https://booth.pm/ja/items/5636144,https://booth.pximg.net/76a6ea9f-d667-40a0-86e5-8f2f2f7feca0/i/5636144/9fda3949-5dfc-4f29-935c-78119228d35d_base_resized.jpg,250,アクセサリー
+涙めがね,https://booth.pm/ja/items/6311498,https://booth.pximg.net/3d775cc8-13a2-4423-8fdc-2b4c93f81bf1/i/6311498/fd69a120-72c6-49da-84d2-b057de2893c9_base_resized.jpg,500,アクセサリー
+StarChain,https://booth.pm/ja/items/7268438,https://booth.pximg.net/2e38d6f6-e891-41e8-907d-bbefc2826275/i/7268438/306dd259-eef8-47f4-b896-8c75cf8e20cd_base_resized.jpg,500,アクセサリー
+face pierce set,https://booth.pm/ja/items/7398681,https://booth.pximg.net/3e17ddc8-53a7-412f-8665-fde8ab4d7085/i/7398681/20492beb-f5cd-498c-8a41-1b995cc17279_base_resized.jpg,400,アクセサリー
+きらきらハートのおしゃぶり,https://booth.pm/ja/items/7427549,https://booth.pximg.net/ccff422a-8db9-48f1-b481-446dc988145b/i/7427549/01a9a9bb-a6a3-42c5-90a9-55827be309f7_base_resized.jpg,200,アクセサリー
+Cheek_megane,https://booth.pm/ja/items/7052918,https://booth.pximg.net/1e752c9f-5716-41cb-8929-4c08f9505c33/i/7052918/6ea01138-6af6-4477-bac1-0b9d0d1b1070_base_resized.jpg,300,アクセサリー
+メイクアップ＆アイテクスチャ,https://booth.pm/ja/items/7426346,https://booth.pximg.net/b5372f46-8163-449e-bdf8-db9451104d4a/i/7426346/b3461444-f7be-4f34-9317-4bdc7f4a3bb5_base_resized.jpg,700,メイク
+Crystal Eye,https://booth.pm/ja/items/7390509,https://booth.pximg.net/c606758d-c213-4c8a-ae5b-a427421f3262/i/7390509/805671fc-8158-4905-bddf-8ee0447c4a18_base_resized.jpg,0,メイク
+✧FruitsTart✧EyeTexture,https://booth.pm/ja/items/7387392,https://booth.pximg.net/16e4dd49-5564-49cd-9c6b-30f3c7722124/i/7387392/90c63cd9-3566-4d9b-9d04-9ab75bde5326_base_resized.jpg,400,メイク
+PIXEL♥EYE,https://booth.pm/ja/items/7447855,https://booth.pximg.net/d6d5f224-c715-4559-b175-c7d91afdaec6/i/7447855/b07da6fb-a01f-4ac3-8151-592693d01b20_base_resized.jpg,300,メイク
+隈取りメイクテクスチャ,https://booth.pm/ja/items/7272800,https://booth.pximg.net/d6d5f224-c715-4559-b175-c7d91afdaec6/i/7272800/f77643e2-598e-4bda-a7be-fa1b82e967a6_base_resized.jpg,200,メイク
+Shabon Angel Nail,https://booth.pm/ja/items/7287294,https://booth.pximg.net/575fed62-044d-4b71-b916-c1b35d382b91/i/7287294/810b77bc-ca6e-469e-8560-743dcd83e41d_base_resized.jpg,600,ネイル
+えのぐeye,https://booth.pm/ja/items/7482444,https://booth.pximg.net/c606758d-c213-4c8a-ae5b-a427421f3262/i/7482444/67c06e33-8088-4850-9669-a8654caf7085_base_resized.jpg,100,メイク
+フレッシュオレンジおめめ,https://booth.pm/ja/items/7131032,https://booth.pximg.net/74db1712-06e5-45e4-b0d5-b9f55b5b184c/i/7131032/1213de93-7870-4b98-8dfa-309837ae77ba_base_resized.jpg,0,メイク
+EYE TEXTURE 01,https://booth.pm/ja/items/6417761,https://booth.pximg.net/49024716-02fd-4ad8-b574-02eb3acd28b6/i/6417761/8b5d20e1-905e-4dc6-9269-52c276d81c8e_base_resized.jpg,600,メイク
+ぷまちゃん対応アイテクスチャ,https://booth.pm/ja/items/7487634,https://booth.pximg.net/9b72ae44-9400-4d2f-8d38-d7ec1240f110/i/7487634/e4532409-84bd-4802-b991-cdb5b4a669ab_base_resized.jpg,0,メイク
+メタリックっぽいネイル,https://booth.pm/ja/items/7142163,https://booth.pximg.net/ccff422a-8db9-48f1-b481-446dc988145b/i/7142163/589658e2-9818-4233-8974-6f461e9a88ed_base_resized.jpg,200,ネイル
+✦𝙷𝚎𝚊𝚛𝚝𝙶𝚕𝚎𝚊𝚖𝙴𝚢𝚎✦,https://booth.pm/ja/items/7263840,https://booth.pximg.net/afe8f8c6-492e-4d6c-a395-bc54aaec65b2/i/7263840/27594fe5-8656-4625-ba60-6a09d03cc061_base_resized.jpg,300,メイク
+𝐶ℎ𝑢𝑟𝑢 𝐶ℎ𝑢𝑟𝑢 𝐸𝑦𝑒 𝑇𝑒𝑥𝑡𝑢𝑟𝑒 ♡,https://booth.pm/ja/items/7214620,https://booth.pximg.net/afe8f8c6-492e-4d6c-a395-bc54aaec65b2/i/7214620/3ad15b3d-ba56-4dfe-a13e-4bc0059ceaf7_base_resized.jpg,300,メイク
+ネイルテクスチャ,https://booth.pm/ja/items/7427060,https://booth.pximg.net/ebf5716f-9b6f-43d0-9f34-537b633cc161/i/7427060/d232f1e5-bc8b-4591-8f14-e3e117ec0d5a_base_resized.jpg,0,ネイル
+星雪の導,https://booth.pm/ja/items/6712342,https://booth.pximg.net/003107a7-ff67-4432-bb4b-204cf0d15dd6/i/6712342/2f60de55-8800-4b83-9bb5-af150935e884_base_resized.jpg,300,メイク
+VanG eye♡,https://booth.pm/ja/items/7173492,https://booth.pximg.net/4579b073-a06a-46c8-96b4-697d497763b4/i/7173492/c1e405ca-12e4-4db6-a84f-46587356591b_base_resized.jpg,300,メイク
+Moon Eye,https://booth.pm/ja/items/7328967,https://booth.pximg.net/bde7fa46-e6e3-4040-9258-71954d884d28/i/7328967/5ebf05d3-b1c3-4824-986c-3202a1ea80f1_base_resized.jpg,200,メイク
+NebuLa,https://booth.pm/ja/items/7465562,https://booth.pximg.net/2887ae33-e5a4-410c-8ff1-ad8f03ee255a/i/7465562/109b95f1-6053-41da-b1a9-1b2db405b33f_base_resized.jpg,300,メイク
+ドリーミー☁️アイテクスチャ,https://booth.pm/ja/items/7427023,https://booth.pximg.net/ebf5716f-9b6f-43d0-9f34-537b633cc161/i/7427023/7e9b372f-0932-4845-96e0-544945db5eb8_base_resized.jpg,300,メイク
+こんがり褐色✨メイク＆ボディーテクスチャ,https://booth.pm/ja/items/7427093,https://booth.pximg.net/ebf5716f-9b6f-43d0-9f34-537b633cc161/i/7427093/5a55c783-6edc-4942-8a78-c708163cafad_base_resized.jpg,400,メイク
+レトロ🎀まじかるアイ,https://booth.pm/ja/items/7427086,https://booth.pximg.net/ebf5716f-9b6f-43d0-9f34-537b633cc161/i/7427086/9d04feef-c762-4089-a478-cf5dc1d77e07_base_resized.jpg,300,メイク
+natural makeup&blendshape,https://booth.pm/ja/items/7466556,https://booth.pximg.net/de3f7605-b437-4ca7-a210-a5ae3aa60a67/i/7466556/b53ac0eb-577c-44d6-9a01-e764cdecea2f_base_resized.jpg,350,メイク
+SUYA Eye + Hair Gradation,https://booth.pm/ja/items/7379381,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/7379381/b5f149b7-32ed-4637-b72e-59ba46aae7b0_base_resized.jpg,450,メイク
+ふんわりきらきら,https://booth.pm/ja/items/7378880,https://booth.pximg.net/29f04d5d-35bd-46bf-9aa6-963ce0d1a9e6/i/7378880/89d651ca-9fb4-4044-952a-ee3fbae4244e_base_resized.jpg,300,メイク
+YUMEMI,https://booth.pm/ja/items/7333921,https://booth.pximg.net/a525dd99-dfed-4c41-a8a4-317db73beb2a/i/7333921/f83f0231-782c-4cc5-b6d6-edbcc1fa567b_base_resized.jpg,300,メイク
+もえあにめアイテクスチャRe☆boot,https://booth.pm/ja/items/7480824,https://booth.pximg.net/27f6bcfc-e3c6-425e-8950-f990352a4748/i/7480824/f8f303c9-2caa-4ef3-b84a-e6f04bea4078_base_resized.jpg,300,メイク
+Summer Memory Eye Texture ,https://booth.pm/ja/items/7264818,https://booth.pximg.net/c461c1d9-fb0c-43ed-ba05-41f639997048/i/7264818/3a7fc582-88f5-462a-9b47-c4c19a722959_base_resized.jpg,400,メイク
+Draco eye texture,https://booth.pm/ja/items/7129209,https://booth.pximg.net/c461c1d9-fb0c-43ed-ba05-41f639997048/i/7129209/44b72543-09d5-448f-8d07-0b69d6daa5b0_base_resized.jpg,400,メイク
+VOLTEX eye texture,https://booth.pm/ja/items/6977542,https://booth.pximg.net/c461c1d9-fb0c-43ed-ba05-41f639997048/i/6977542/d0d723ef-5e69-448e-9af4-24361859b618_base_resized.jpg,400,メイク
+abyssal eye texture,https://booth.pm/ja/items/6828964,https://booth.pximg.net/c461c1d9-fb0c-43ed-ba05-41f639997048/i/6828964/598a7d81-6fc4-43c8-8ef8-f69eae3b05ac_base_resized.jpg,400,メイク
+彼岸花Eye Texture,https://booth.pm/ja/items/6769010,https://booth.pximg.net/c461c1d9-fb0c-43ed-ba05-41f639997048/i/6769010/39de833c-feff-43d4-956e-34496e30d724_base_resized.jpg,400,メイク
+りぼんeyeおまけBlendShape,https://booth.pm/ja/items/7481623,https://booth.pximg.net/928c3bdb-1623-47dc-834c-e2097aa957dc/i/7481623/89ddb36a-fb77-41c2-bca8-32a059078d12_base_resized.jpg,300,メイク
+make up and Eye texture,https://booth.pm/ja/items/7485029,https://booth.pximg.net/5d08c189-757e-442c-a7e9-3be46da0d04b/i/7485029/94e5518a-459e-4cf7-a7e5-3270da049e42_base_resized.jpg,300,メイク
+はつこいEye,https://booth.pm/ja/items/7482563,https://booth.pximg.net/c9925981-8f8a-448e-bb3a-347b839c03a9/i/7482563/785ebf90-ea44-4e16-9c05-1090d40599f5_base_resized.jpg,200,メイク
+face make up texture,https://booth.pm/ja/items/7489847,https://booth.pximg.net/2e921088-fd47-4595-a4b2-d4a0c7669279/i/7489847/c4a12d41-2826-485d-8443-84045cf0d3c8_base_resized.jpg,300,メイク
+化粧,https://booth.pm/ja/items/7489295,https://booth.pximg.net/a4799060-9bc3-4a0f-b197-9f5fc273a52f/i/7489295/0f99fb01-9046-4dcb-b62b-ee056822df25_base_resized.jpg,250,メイク
+Pureangeleye,https://booth.pm/ja/items/7469144,https://booth.pximg.net/8d508a09-6ca6-452c-bdcc-20dec835645a/i/7469144/67411b38-9971-4671-931f-1980af2f5d63_base_resized.jpg,200,メイク
+♡Lovely＆Mellow♡ eye・makeupTexture,https://booth.pm/ja/items/7487900,https://booth.pximg.net/15f8ad13-803d-46f5-b3e5-ee54cf7e4d3b/i/7487900/01c6df92-5d8f-40e7-b99e-7d637e62003c_base_resized.jpg,500,メイク
+Eye Texture,https://booth.pm/ja/items/6938398,https://booth.pximg.net/4f1e13ed-acf0-4329-bcca-bd3bf2cbbf48/i/6938398/8445989f-88e4-43b8-8647-458860d41988_base_resized.jpg,300,メイク
+猫ひげっぽい GamingColor,https://booth.pm/ja/items/4206173,https://booth.pximg.net/76a6ea9f-d667-40a0-86e5-8f2f2f7feca0/i/4206173/1f38e3bf-912c-4161-ac1e-1790a8e35033_base_resized.jpg,100,メイク
+アイ＆メイク テクスチャ01,https://booth.pm/ja/items/7488779,https://booth.pximg.net/d6d5f224-c715-4559-b175-c7d91afdaec6/i/7488779/7eb28bf6-74fb-46cb-b8e5-b6ed49f81a70_base_resized.jpg,500,メイク
+Makeup&Eye Texture For PMMA,https://booth.pm/ja/items/7485517,https://booth.pximg.net/18b6d9ca-960d-4a2b-9db5-58f5d515c4e3/i/7485517/95c5dabf-291c-4edd-95e5-575248d7a4a6_base_resized.jpg,1000,メイク
+cyber cat eye texture,https://booth.pm/ja/items/6140442,https://booth.pximg.net/1662650c-6814-49d3-9af7-71f1ba798d64/i/6140442/67aa71ff-9dae-493e-985a-90fbb64020b1_base_resized.jpg,200,メイク
+MAKEUP & EYE & Face Blendshape,https://booth.pm/ja/items/7490623,https://booth.pximg.net/5f8fbe8c-031c-46fe-988e-61950434b2d0/i/7490623/40bbc76d-4aaa-4878-ae63-b82564678c19_base_resized.jpg,1200,メイク
+MAKEUP & EYE & Face Blendshape 2,https://booth.pm/ja/items/7490656,https://booth.pximg.net/5f8fbe8c-031c-46fe-988e-61950434b2d0/i/7490656/4d6339b2-cdff-42ec-8095-33e416bd4c39_base_resized.jpg,1250,メイク
+波が動く*秘密の水面,https://booth.pm/ja/items/6004405,https://booth.pximg.net/f7265526-84e6-47a2-a5e1-3934b7576788/i/6004405/80045680-308d-4dcd-9c44-9a97039303a3_base_resized.jpg,500,メイク
+彩度低め大人アイテクスチャ,https://booth.pm/ja/items/5847405,https://booth.pximg.net/61e86ee5-3531-4eff-81ba-9143f9893104/i/5847405/3b7d360a-7fac-47ee-b5ea-4022a1cdd628_base_resized.jpg,500,メイク
+BlackBerry Eye Texture,https://booth.pm/ja/items/5524850,https://booth.pximg.net/5f8fbe8c-031c-46fe-988e-61950434b2d0/i/5524850/d48a2c5a-df5c-49e5-9688-2f721da78250_base_resized.jpg,350,メイク
+おやすみなEYE＆Lush,https://booth.pm/ja/items/6020746,https://booth.pximg.net/f7265526-84e6-47a2-a5e1-3934b7576788/i/6020746/30cae280-016f-4356-a119-bef571cbdb2f_base_resized.jpg,500,メイク
+HoroNail,https://booth.pm/ja/items/3407613,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/3407613/4df87c72-bd13-498c-b3cc-a8076cbbdaf3_base_resized.jpg,400,ネイル
+ぷまちゃんのけもみみとしっぽをたくさんピコピコさせるシステム！,https://booth.pm/ja/items/7462762,https://booth.pximg.net/003107a7-ff67-4432-bb4b-204cf0d15dd6/i/7462762/59384d2d-05d6-471e-9b98-d34a3a13cca6_base_resized.jpg,400,ギミック
+ぷまちゃんかわいいポーズ,https://booth.pm/ja/items/7477862,https://booth.pximg.net/25f7fe5e-8706-465f-9378-889660bc4741/i/7477862/e4f07fc0-1686-499c-9654-707e2e7006e9_base_resized.jpg,300,ギミック
+なめらかハンドジェスチャー,https://booth.pm/ja/items/6843580,https://booth.pximg.net/380f223c-71c9-40b4-92dd-20579c32f007/i/6843580/6531e277-462f-4e9a-a46e-8840be2e3bd2_base_resized.jpg,800,ギミック
+なめらかハンドジェスチャー　拡張カスタムパッケージ　癒し＆刺激,https://booth.pm/ja/items/6907250,https://booth.pximg.net/380f223c-71c9-40b4-92dd-20579c32f007/i/6907250/7ccdd527-8e5c-4f1b-b4c3-318208001a52_base_resized.jpg,400,ギミック
+みんなでつかめるだこちてギミック,https://booth.pm/ja/items/7016968,https://booth.pximg.net/bfaaec03-c539-43ea-8024-246311962b7c/i/7016968/80cba311-f8af-4003-8802-9a3283a406d4_base_resized.jpg,0,ギミック
+Avatar Blink Fix,https://booth.pm/ja/items/7074770,https://booth.pximg.net/be5348bc-3ff4-481c-aa37-fc6797a12e23/i/7074770/68e75cf4-859f-4abd-8834-9a973692cd70_base_resized.jpg,500,ギミック
+ぴょこぴょこ耳,https://booth.pm/ja/items/7420867,https://booth.pximg.net/76a6ea9f-d667-40a0-86e5-8f2f2f7feca0/i/7420867/6c31e73c-21d5-4043-bcb2-ac2da5672b55_base_resized.jpg,0,ギミック
+AddPlus,https://booth.pm/ja/items/7482506,https://booth.pximg.net/3714acbb-4a5e-4926-84c1-9806e5ce69ad/i/7482506/6c2b9893-1a3e-4c12-9861-1e9075fe4bae_base_resized.jpg,800,ギミック
+けもーしょん,https://booth.pm/ja/items/7488669,https://booth.pximg.net/cb9c4b09-4243-4766-949b-a1400cd79ff8/i/7488669/77b846a8-70da-4d6e-a5a4-ef4a0de7c419_base_resized.jpg,500,ギミック
+動く！ピューマのぷまちゃん表情セット,https://booth.pm/ja/items/7478143,https://booth.pximg.net/52e812cb-ed9f-44cf-8c44-784507298ca6/i/7478143/448f3d78-e162-4205-bd3d-c861c5d6098b_base_resized.jpg,500,ギミック
+天使のふたごツインテール,https://booth.pm/ja/items/7451985,https://booth.pximg.net/1fc997f0-a6ac-409a-917d-25ec039f6f71/i/7451985/b0497d69-efe4-4b1f-96af-f5a3ede961fd_base_resized.jpg,300,髪型
+Hairグラデーション メッシュ・ツートンカラー,https://booth.pm/ja/items/7489857,https://booth.pximg.net/5aa36f33-2884-45f4-9721-61b6809d6035/i/7489857/b007b44d-5bbf-4390-b01d-2cf42e8edee7_base_resized.jpg,300,髪型
+えっちな♡ぷまちゃん表情セット,https://booth.pm/ja/items/7478243,,1000,R-18
+Nipple texture type2,https://booth.pm/ja/items/6088200,,300,R-18
+乳首テクスチャ,https://booth.pm/ja/items/3601617,,300,R-18
+ボディテクスチャ BodyTexture,https://booth.pm/ja/items/7489115,,600,R-18
+ふにゃふにゃちくび,https://booth.pm/ja/items/7483592,,1200,R-18
+ぷまちゃんの身体を更にエッチ♥にするテクスチャ,https://booth.pm/ja/items/7486341,,800,R-18
+⁡Eye Texture☾ ໋,https://booth.pm/ja/items/7446573,https://booth.pximg.net/a2e3e5c2-d5af-43e0-8cb0-c6133e555bdb/i/7446573/e808c3a8-3695-4570-9339-a456884a9e2d_base_resized.jpg,300,メイク
+ナチュラルネイル,https://booth.pm/ja/items/5604188,https://booth.pximg.net/485718ed-c70c-4717-853c-0320a79dd784/i/5604188/6655e056-1631-4aca-9e4e-fb39352838b0_base_resized.jpg,400,ネイル
+Be My Baby. Eye&Eyelash Make Texture,https://booth.pm/ja/items/5810479,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/5810479/b0b397e3-ad10-4fa9-a89d-724cb55db9d0_base_resized.jpg,250,メイク
+BathTowel_with_hiyoko,https://booth.pm/ja/items/4597051,https://booth.pximg.net/485718ed-c70c-4717-853c-0320a79dd784/i/4597051/1280cf90-63de-4fa2-baa1-08d3da142358_base_resized.jpg,1100,衣装
+泡沫Eye Texture,https://booth.pm/ja/items/6140197,https://booth.pximg.net/8ac473b6-c873-4d80-bae6-e99d4b48728a/i/6140197/6854e3b9-5215-46ae-89c0-d955be128d04_base_resized.jpg,200,メイク
+けもはんどマイクロビキニ,https://booth.pm/ja/items/5593582,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/5593582/a56bb673-9758-4700-bcc3-1642fc870965_base_resized.jpg,2000,衣装
+Re:うさぎさんるーむうぇあ,https://booth.pm/ja/items/5657072,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/5657072/191b82e6-f8b8-4947-b90e-07e6e0c7a57f_base_resized.jpg,1800,衣装
+Re:セーラーロリ,https://booth.pm/ja/items/4871296,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/4871296/77fe3dd4-cf02-4f99-a3b0-92021a95734c_base_resized.jpg,1800,衣装
+フリルマリンビキニ,https://booth.pm/ja/items/5739125,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/5739125/395a186f-1d74-40e3-abb8-e5014e99fa66_base_resized.jpg,1800,衣装
+ChainRoundGlasses,https://booth.pm/ja/items/6710543,https://booth.pximg.net/26e68fab-0375-440d-9b49-cd67a7ce7e9c/i/6710543/94aa8cf8-bf6d-4899-83d9-04d7d47c1c91_base_resized.jpg,500,アクセサリー
+DarkNailSelection,https://booth.pm/ja/items/5909024,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5909024/3f117afb-5ee0-47bc-ab35-ef19ba9fe097_base_resized.jpg,300,ネイル
+ムーメイド,https://booth.pm/ja/items/7106106,https://booth.pximg.net/485718ed-c70c-4717-853c-0320a79dd784/i/7106106/a965e7d5-f2de-4b06-aa15-d136a8882d7c_base_resized.jpg,1500,衣装
+SimpleEyepatch,https://booth.pm/ja/items/6749562,https://booth.pximg.net/26e68fab-0375-440d-9b49-cd67a7ce7e9c/i/6749562/ad02acb5-34d4-4efe-9c73-69697085b599_base_resized.jpg,500,アクセサリー
+Noa Texture,https://booth.pm/ja/items/6912080,https://booth.pximg.net/f988fb85-ec75-42dd-af82-3deab50360ea/i/6912080/4995763b-4928-4b4f-8de9-60dd3b469d22_base_resized.jpg,300,メイク
+あいされりぼんにっと,https://booth.pm/ja/items/6572950,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/6572950/57c75132-0789-42b4-8f29-e65927205643_base_resized.jpg,1800,衣装
+なでると表情が変わるようにするやつ　Nade+,https://booth.pm/ja/items/6128640,https://booth.pximg.net/8ac473b6-c873-4d80-bae6-e99d4b48728a/i/6128640/52d7ed87-1cc3-42e9-a41a-2543ab5dbb15_base_resized.jpg,100,ギミック
+Marine Delight Eye Texture,https://booth.pm/ja/items/5770658,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/5770658/f32a3e73-0969-4b3b-8616-1fc71a7665b5_base_resized.jpg,250,メイク
+Re:旧型スクール水着,https://booth.pm/ja/items/4007888,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/4007888/ec123831-22f6-433e-bddf-c4b522562a79_base_resized.jpg,1500,衣装
+GOTHCHINA,https://booth.pm/ja/items/6215655,https://booth.pximg.net/c5f07bf0-8b84-476c-8482-585249aba6c1/i/6215655/216da2de-29d6-48c4-8b40-61cd5232a497_base_resized.jpg,2200,衣装
+ナチュラルネイルFOOTver,https://booth.pm/ja/items/6158186,https://booth.pximg.net/485718ed-c70c-4717-853c-0320a79dd784/i/6158186/5ebcb64d-0b1a-4604-8198-a9335a0d091d_base_resized.jpg,400,ネイル
+HiganbanaNail,https://booth.pm/ja/items/4171568,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4171568/2991370c-c672-4cc4-baa8-ac7c1cb13741_base_resized.jpg,300,ネイル
+Reらぶきゅんハートアイテクスチャ,https://booth.pm/ja/items/6075228,https://booth.pximg.net/61e86ee5-3531-4eff-81ba-9143f9893104/i/6075228/a43ddc61-8f9d-4596-a848-75b99bd957dc_base_resized.jpg,500,メイク
+波が動く！しんかいEyeTexture＋nail material,https://booth.pm/ja/items/6662068,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/6662068/c309effa-8ea9-456e-92bd-887bcd774da6_base_resized.jpg,300,メイク
+舌ピアス-5種類-,https://booth.pm/ja/items/6926616,https://booth.pximg.net/26e68fab-0375-440d-9b49-cd67a7ce7e9c/i/6926616/78d96d4e-34e9-4b1a-b360-7b20cb78d5a0_base_resized.jpg,500,アクセサリー
+Bouquet Blanche,https://booth.pm/ja/items/6963766,https://booth.pximg.net/cd351df1-167a-4572-9c99-cecf0b39143d/i/6963766/5b020012-d120-42d2-b7c7-a9ce34419189_base_resized.jpg,900,衣装
+ミリキュートワンピース,https://booth.pm/ja/items/5569304,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/5569304/200c7fbc-48f5-498b-ad05-1414dee7af0f_base_resized.jpg,1800,衣装
+うさきゅばすタトゥー,https://booth.pm/ja/items/7114136,https://booth.pximg.net/d6d5f224-c715-4559-b175-c7d91afdaec6/i/7114136/d1f84ef2-804f-4e29-88de-0a1b3e6d6fdc_base_resized.jpg,200,メイク
+SimpleNailSet,https://booth.pm/ja/items/5502301,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5502301/dbc83023-985f-4621-bd56-7494c2662cc2_base_resized.jpg,300,ネイル
+なまいきめいど,https://booth.pm/ja/items/6802428,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/6802428/ff527511-6ee6-4c53-9cd7-ff3c01c9b461_base_resized.jpg,1800,衣装
+MoltenSpikes,https://booth.pm/ja/items/7099354,https://booth.pximg.net/0213a48a-42d5-4c65-893d-41be91bacf78/i/7099354/c3bd9cfa-f6ba-4dbf-901f-8604dc0cbd8e_base_resized.jpg,700,ネイル
+Tenshi no Outfit,https://booth.pm/ja/items/6709907,https://booth.pximg.net/c362feb3-cd2c-4ac4-9fd6-96468fe022e8/i/6709907/cda718cb-b6d8-4a19-b815-68d3c74fe877_base_resized.jpg,1300,衣装
+もこ♡ぱじゃま,https://booth.pm/ja/items/7007853,https://booth.pximg.net/efc163b6-4cf8-415d-94a1-56a986267ab9/i/7007853/fa75da4b-a6b5-4b63-9e94-4bcde6cc5a08_base_resized.jpg,600,衣装
+くゆる,https://booth.pm/ja/items/6697009,https://booth.pximg.net/444c7279-bde1-423f-a6f2-95997c7496db/i/6697009/d33285e1-cec5-4e8b-8c55-ff81cde39ca4_base_resized.jpg,300,メイク
+Brassbloom,https://booth.pm/ja/items/7461772,https://booth.pximg.net/353e6ea3-8d6c-42e1-9ab2-476454d2993f/i/7461772/6ac07a44-3f5a-4758-a7fe-1cb1324d3453_base_resized.jpg,1200,衣装
+森うさぎおーばーおーる,https://booth.pm/ja/items/6215023,https://booth.pximg.net/fb6b1fad-86c2-45e3-89e8-e117c662ecc2/i/6215023/03b63aa4-e656-4cce-8f03-200723b3851d_base_resized.jpg,1800,衣装
+ゆめほしEye,https://booth.pm/ja/items/6363260,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/6363260/570610b0-afec-4f7e-b1ff-f360475aa000_base_resized.jpg,200,メイク
+Eye+Make texture -思い出の君-,https://booth.pm/ja/items/6217140,https://booth.pximg.net/cd351df1-167a-4572-9c99-cecf0b39143d/i/6217140/f4e68934-fe38-4210-ad43-589c18c56b8a_base_resized.jpg,300,メイク
+AuroraNail,https://booth.pm/ja/items/4419615,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4419615/e9c3785b-5130-4e1c-9d9b-237ecc2314d6_base_resized.jpg,300,ネイル
+おぼろ,https://booth.pm/ja/items/6324137,https://booth.pximg.net/444c7279-bde1-423f-a6f2-95997c7496db/i/6324137/22e7f628-db45-4c84-8cb5-a58e5c5a0ad1_base_resized.jpg,300,メイク
+デザインタトゥー,https://booth.pm/ja/items/6827365,https://booth.pximg.net/a2c698b2-0e6b-46ee-86ff-ad03b28c0c1d/i/6827365/0f42f177-9127-4f74-b483-af1f1b1c6c8a_base_resized.jpg,500,メイク
+ボーリングシャツセット,https://booth.pm/ja/items/7359829,https://booth.pximg.net/a4d2fbe3-ee19-4f9c-b4c2-d8900e3f99e4/i/7359829/641911eb-2f72-4d8a-b6b7-7124720b3b92_base_resized.jpg,1600,衣装
+Lucent Pierette,https://booth.pm/ja/items/7191766,https://booth.pximg.net/353e6ea3-8d6c-42e1-9ab2-476454d2993f/i/7191766/bf26daaa-efac-4860-bf8f-4ceaa4ea19dc_base_resized.jpg,1600,衣装
+Mocha Veil Eye+Eyelash,https://booth.pm/ja/items/7415194,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/7415194/2208a418-ffc3-473a-abd6-6ac36660ef81_base_resized.jpg,250,メイク
+Pmma ⯎ Pmma Pure make up & body texture + Face Blendshapes,https://booth.pm/ja/items/7490579,https://booth.pximg.net/025c40f3-4fe4-403f-8c64-fee38d9e25af/i/7490579/64d28d3b-465e-4b5e-a275-4e48d427f4f1_base_resized.jpg,500,メイク
+WiredNail,https://booth.pm/ja/items/3299344,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/3299344/0e3b56d9-49b2-412c-85b8-b508c755392a_base_resized.jpg,300,ネイル
+HiganbanaNail2,https://booth.pm/ja/items/6054904,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6054904/f3539b07-599d-4de2-a929-847a2b9019ca_base_resized.jpg,300,ネイル
+Pose Animation Set 22,https://booth.pm/ja/items/7489853,https://booth.pximg.net/c362feb3-cd2c-4ac4-9fd6-96468fe022e8/i/7489853/2b541c6d-c0b8-43ea-aa24-0bb07800fdc4_base_resized.jpg,500,ギミック
+彩度低め微睡アイテクスチャ,https://booth.pm/ja/items/7011735,https://booth.pximg.net/61e86ee5-3531-4eff-81ba-9143f9893104/i/7011735/d0d261e9-6bd2-4323-9320-ea29f7883a77_base_resized.jpg,500,メイク
+astra,https://booth.pm/ja/items/6714224,https://booth.pximg.net/d5a60d26-1ec7-4f6a-b189-c02a8f58940c/i/6714224/a47aa0fe-bebb-4d3b-90ec-d0d93b4018c9_base_resized.jpg,500,アクセサリー
+闇落ちeye texture ,https://booth.pm/ja/items/6752775,https://booth.pximg.net/589eec52-dce6-4dcd-8e76-ea4a4ef99891/i/6752775/fa1fb479-6441-48f3-86dd-fae91069256a_base_resized.jpg,400,メイク
+MagnetyNail,https://booth.pm/ja/items/5573361,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5573361/3941fa3c-67e8-45b7-a595-1b47ec2a4490_base_resized.jpg,300,ネイル
+DevilNuanceNail,https://booth.pm/ja/items/6187850,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6187850/ed23f13b-1fac-4454-888c-905df973bcac_base_resized.jpg,300,ネイル
+Fluer de Classique,https://booth.pm/ja/items/6818380,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6818380/ef6d05b7-9e94-45bb-a3b9-cc0bfa07af87_base_resized.jpg,300,ネイル
+艶Tongue texture,https://booth.pm/ja/items/6499697,https://booth.pximg.net/03f34be4-e250-46b8-a101-a679d0b355b9/i/6499697/e1d9db59-8632-4603-9bed-b9583053c028_base_resized.jpg,200,メイク
+魔性のメンヘラアイテクスチャ,https://booth.pm/ja/items/6668113,https://booth.pximg.net/61e86ee5-3531-4eff-81ba-9143f9893104/i/6668113/c413b560-212f-4c1d-9633-1aff9c941b91_base_resized.jpg,500,メイク
+IlluminationNail,https://booth.pm/ja/items/4428279,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4428279/74fc3110-0465-4ddd-9703-8cb10bef55f0_base_resized.jpg,300,ネイル
+ふあしゅあ,https://booth.pm/ja/items/7190125,https://booth.pximg.net/1f9653b1-3fb6-4023-b6ba-59e1004939f9/i/7190125/088c13a3-adf9-4927-99c7-8a4b1f0ef470_base_resized.jpg,200,メイク
+Cat eye texture pack,https://booth.pm/ja/items/6627482,https://booth.pximg.net/589eec52-dce6-4dcd-8e76-ea4a4ef99891/i/6627482/f0d055b1-2650-4e81-b198-842e32be32e4_base_resized.jpg,400,メイク
+HanabiNail,https://booth.pm/ja/items/5003033,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5003033/89817535-9419-4de3-b932-c8f7ba29a5ac_base_resized.jpg,300,ネイル
+きんもくせいヘイロー,https://booth.pm/ja/items/7423558,https://booth.pximg.net/012d4e78-5fdc-4fc1-ae8c-54fda502b287/i/7423558/791dc582-8f5f-435c-a9ab-2d8a313af23b_base_resized.jpg,500,アクセサリー
+ChocoNail ~Assort~,https://booth.pm/ja/items/4481128,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4481128/928cc88b-28f3-4796-8a6b-9adbc9ed54f4_base_resized.jpg,400,ネイル
+LuxuryKnit,https://booth.pm/ja/items/7030867,https://booth.pximg.net/353e6ea3-8d6c-42e1-9ab2-476454d2993f/i/7030867/e80ebe99-3e6c-4f7d-af29-6d79c99e5c7c_base_resized.jpg,1000,衣装
+WeatherNail,https://booth.pm/ja/items/6359804,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6359804/2cb32e81-090b-4dee-a898-2408b5a64dd7_base_resized.jpg,500,ネイル
+SakuraNail,https://booth.pm/ja/items/4638886,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4638886/79ca60e4-6fd3-4841-9292-5829d02f5a56_base_resized.jpg,300,ネイル
+Silent Sky,https://booth.pm/ja/items/7063133,https://booth.pximg.net/589eec52-dce6-4dcd-8e76-ea4a4ef99891/i/7063133/0a421c7f-6224-40cf-876d-214a3886f99c_base_resized.jpg,400,メイク
+KingyoNail,https://booth.pm/ja/items/5860446,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5860446/0a1e6e04-304a-4866-baa9-ca74e10679ab_base_resized.jpg,300,ネイル
+CloudyNail,https://booth.pm/ja/items/5111849,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5111849/15886cdc-2c90-4c85-987a-2dba04277f94_base_resized.jpg,300,ネイル
+Pose Set,https://booth.pm/ja/items/7237368,https://booth.pximg.net/496e7c6c-c6ac-47c0-950c-d5b587c6e169/i/7237368/7f536fee-34da-412f-9d7e-fe16269ea9ad_base_resized.jpg,400,ギミック
+FlareNail,https://booth.pm/ja/items/6195945,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6195945/46a9bbf2-08b9-4c63-bc34-a9487562073c_base_resized.jpg,300,ネイル
+PythonNail,https://booth.pm/ja/items/6438600,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6438600/d9c60981-f29c-40cc-bd14-90204baa6793_base_resized.jpg,200,ネイル
+DarkEye texture,https://booth.pm/ja/items/6451555,https://booth.pximg.net/03f34be4-e250-46b8-a101-a679d0b355b9/i/6451555/72ee7d0e-3189-4534-8ac1-443ba8b656e3_base_resized.jpg,300,メイク
+Make+Eye Texture,https://booth.pm/ja/items/7484679,https://booth.pximg.net/b5b0ecd4-be79-4eac-ab82-87ad05246e42/i/7484679/c032623b-8b71-48b5-9dca-3a46a792926a_base_resized.jpg,500,メイク
+ぷまpure MakeUp,https://booth.pm/ja/items/7491123,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/7491123/884700d7-86dc-4064-b117-376275224dd0_base_resized.jpg,400,メイク
+ダリラアイ,https://booth.pm/ja/items/7248019,https://booth.pximg.net/7608e135-4a77-494a-b2cf-86524edd0daa/i/7248019/39bbdbc5-f386-4cf9-b245-c56862d178f2_base_resized.jpg,150,メイク
+よひら,https://booth.pm/ja/items/6958987,https://booth.pximg.net/444c7279-bde1-423f-a6f2-95997c7496db/i/6958987/aab26f02-92eb-4ec2-a5f2-95dcf389089f_base_resized.jpg,300,メイク
+胸の谷間テクスチャ,https://booth.pm/ja/items/7487404,https://booth.pximg.net/249e6c13-02dc-42e6-be7c-8f266e324501/i/7487404/e8d15a34-4a74-4933-962e-5afc3796ac30_base_resized.jpg,700,メイク
+Simple Heart Eye Texture,https://booth.pm/ja/items/6589908,https://booth.pximg.net/8c947d84-b42d-4a28-940e-851bcef4f53f/i/6589908/6251f4a1-92c9-4f6a-b38b-14d6033d4b56_base_resized.jpg,150,メイク
+Hoodie outer,https://booth.pm/ja/items/7212859,https://booth.pximg.net/47f25379-f64e-44b3-af06-b88438063a9a/i/7212859/fbab3f80-83ac-4d21-b99c-04ec242eeb0a_base_resized.jpg,0,衣装
+Void pierce ,https://booth.pm/ja/items/7212198,https://booth.pximg.net/3e17ddc8-53a7-412f-8665-fde8ab4d7085/i/7212198/0d63cd4a-4e70-48ad-8843-0df095cdb642_base_resized.jpg,150,アクセサリー
+FaceTracking Add-on,https://booth.pm/ja/items/7488956,https://booth.pximg.net/246e93e3-3d3a-4568-83fb-5b3e2d093096/i/7488956/c4a16d0a-cdac-43f4-aefc-0894c055d130_base_resized.jpg,1500,ギミック
+耳ぴょこギミック,https://booth.pm/ja/items/7491066,https://booth.pximg.net/4bc3b1c1-4dca-426b-afa8-8a4fba4a0d12/i/7491066/980e6987-d30c-4454-9646-a1e650dc3cdb_base_resized.jpg,550,ギミック
+lilycalInventory テンプレート,https://booth.pm/ja/items/6629116,,0,ギミック
+ぷまカメラ,https://booth.pm/ja/items/7491271,https://booth.pximg.net/a8679631-062b-45a5-a265-a8832fdff6e2/i/7491271/bf7a60f2-f9da-44c0-8ba9-0ce72b9954fa_base_resized.jpg,400,ギミック
+Make up Texture　-Soft Bloom-,https://booth.pm/ja/items/7489063,https://booth.pximg.net/cd351df1-167a-4572-9c99-cecf0b39143d/i/7489063/a9ebd6e4-50b3-4dc9-a390-fdb73a759b96_base_resized.jpg,300,メイク
+ギミック付きうきわ,https://booth.pm/ja/items/7257691,https://booth.pximg.net/fe8aaba7-6df3-4109-a918-c72dd09f0005/i/7257691/ae97487c-a70b-4783-91de-611d13fc85aa_base_resized.jpg,300,アクセサリー
+Dreamy Eyes,https://booth.pm/ja/items/7344920,https://booth.pximg.net/137a76c8-8f19-4fd6-ae68-a3b3bf65d3df/i/7344920/534c8802-1fcb-4505-92e5-0a83cd4eb773_base_resized.jpg,150,メイク
+ぷま=PMMA=アイテクスチャ6種よくばりセット！,https://booth.pm/ja/items/7491937,https://booth.pximg.net/8b69fa6a-ac51-4e8e-b928-6d56cd2fdd29/i/7491937/1e12b9fe-1464-46a5-b644-a4914752f928_base_resized.jpg,1000,メイク
+PMMA SUBCUL MAKEUP　メイク・ブレンドシェイプ,https://booth.pm/ja/items/7488565,https://booth.pximg.net/cef0e96f-3a30-4e6c-8d4a-3a88a6e20930/i/7488565/793c4737-e74e-4659-a423-55655014f94e_base_resized.jpg,400,メイク
+SWEST,https://booth.pm/ja/items/7268180,https://booth.pximg.net/e34f984d-07fd-4be8-b999-4690c5911548/i/7268180/745258db-93f8-4e93-90de-b4b0e078f218_base_resized.jpg,800,衣装
+FREE表情12種類セット,https://booth.pm/ja/items/6737487,https://booth.pximg.net/b3e6aec7-70e9-451c-b2e5-dc805ef24e86/i/6737487/35a350f2-9b1c-458e-9f75-1923489c2099_base_resized.jpg,0,ギミック
+Sugar Love Ribbon　Nail,https://booth.pm/ja/items/7403155,https://booth.pximg.net/07576329-79ce-40c1-b81d-56d574310f51/i/7403155/a1b90120-28f2-44bc-83ca-8d4737ae75e9_base_resized.jpg,450,ネイル
+GUILTYメイク,https://booth.pm/ja/items/7486611,https://booth.pximg.net/dce2fa8e-3f0b-4cdb-bc98-6e030eac75a3/i/7486611/ca5ee2b0-7a9f-4c72-ab85-53279753b46c_base_resized.jpg,350,メイク
+ᴋᴀᴡᴀɪɪ ᴍᴀᴋᴇᴜᴘ&ᴀɴɪᴍᴀᴛɪᴏɴ,https://booth.pm/ja/items/7435271,https://booth.pximg.net/10f24682-c18c-46c1-bfce-88a9096faf6f/i/7435271/8db5e8cb-ad9e-4475-853f-914408f20fb8_base_resized.jpg,600,メイク
+Maple Puff,https://booth.pm/ja/items/7487644,https://booth.pximg.net/6d67c004-ffe6-47da-9a96-71ef7e4989ba/i/7487644/02541c9f-93b1-4e49-bd6e-66fca2f8990b_base_resized.jpg,1400,衣装
+Ocean Reve Eye Texture,https://booth.pm/ja/items/7481182,https://booth.pximg.net/8c947d84-b42d-4a28-940e-851bcef4f53f/i/7481182/9cad0e45-74cf-4a03-b508-1728eb8d3a29_base_resized.jpg,150,メイク
+Tongue Texture,https://booth.pm/ja/items/7490260,https://booth.pximg.net/358f151e-2164-4218-880d-44cc914a42c2/i/7490260/4718a4c1-91cf-4914-8b53-3263d052b200_base_resized.jpg,200,メイク
+Makeup texture,https://booth.pm/ja/items/7431719,https://booth.pximg.net/29f04d5d-35bd-46bf-9aa6-963ce0d1a9e6/i/7431719/dadb9a9e-4b47-4106-84af-3ad6e7867cf6_base_resized.jpg,300,メイク
+おちびちゃんズ Pmma ⁺Sister,https://booth.pm/ja/items/6666165,https://booth.pximg.net/107fb2ae-f782-4363-bb9f-bb92a1e1a1c9/i/6666165/d709f08d-5a3c-4052-802e-572a3ed5df45_base_resized.jpg,1400,ギミック
+ふわりアイ,https://booth.pm/ja/items/6973503,https://booth.pximg.net/7608e135-4a77-494a-b2cf-86524edd0daa/i/6973503/7379a638-3a84-4426-a090-bb3bdfdf7504_base_resized.jpg,200,メイク
+LumiDrop,https://booth.pm/ja/items/7473102,https://booth.pximg.net/208d798f-5ab8-42f7-84a1-3b49f374ddc9/i/7473102/804a2262-7f1c-4870-b700-b1d58cd933b1_base_resized.jpg,300,メイク
+Scale Eye Textures,https://booth.pm/ja/items/7490605,https://booth.pximg.net/5626dcf1-01d2-49c4-9447-c4c446dd15fe/i/7490605/e7d51493-4149-4430-b52f-88531119a171_base_resized.jpg,300,メイク
+PMMA - Face Tracking Add-on,https://booth.pm/ja/items/7490864,https://booth.pximg.net/e68dbfcd-3433-43e5-9713-4ffd8b8f621e/i/7490864/113bee03-dbf8-49dd-87de-387b44d1acbd_base_resized.jpg,300,ギミック
+しゅわっとソーダアイ,https://booth.pm/ja/items/7485331,https://booth.pximg.net/94437ee6-638f-44ef-8552-17373c78cbd8/i/7485331/8fce3b5a-4cd2-4e10-bfd6-892e95c7885c_base_resized.jpg,300,メイク
+PUKI3 EYE&MAKE&BODY,https://booth.pm/ja/items/7490252,https://booth.pximg.net/fbad6575-c39a-4330-839b-4d9f79229a24/i/7490252/fb4e8370-b93b-41b5-ac9f-1ff923f6358d_base_resized.jpg,500,メイク
+BOSD Eye,https://booth.pm/ja/items/7398474,https://booth.pximg.net/3e17ddc8-53a7-412f-8665-fde8ab4d7085/i/7398474/f193d51d-15c3-4f96-81a3-ab29f9f87d1c_base_resized.jpg,0,メイク
+人外改変支援テクスチャ,https://booth.pm/ja/items/7491064,https://booth.pximg.net/0ed89c3a-533e-4a38-8848-340a402a6dcb/i/7491064/c9cb4405-2f73-40f9-9c61-d0c8229d430c_base_resized.jpg,0,メイク
+ぷまちゃん対応お洋服SET,https://booth.pm/ja/items/7475789,https://booth.pximg.net/efc163b6-4cf8-415d-94a1-56a986267ab9/i/7475789/2be54bfa-24bc-470f-a00f-e81f59727e31_base_resized.jpg,1200,衣装
+Autumn Flare,https://booth.pm/ja/items/7456022,https://booth.pximg.net/589eec52-dce6-4dcd-8e76-ea4a4ef99891/i/7456022/32da9977-f22c-4140-b940-b3276e93a9f8_base_resized.jpg,500,メイク
+NoriBlocker,https://booth.pm/ja/items/5808613,https://booth.pximg.net/3714acbb-4a5e-4926-84c1-9806e5ce69ad/i/5808613/36dde254-2227-4564-a32c-c11faa01da68_base_resized.jpg,0,ギミック
+ShuwaShuwa,https://booth.pm/ja/items/7488825,https://booth.pximg.net/3030850d-58c7-49b8-8ac2-beab81344995/i/7488825/80fec67c-8811-4cfc-b123-4d7ded4c532e_base_resized.jpg,300,メイク
+Fluffy Heart,https://booth.pm/ja/items/6837657,https://booth.pximg.net/e9745ce8-2d5d-4419-b1f6-5bc65ba05703/i/6837657/3e2c6f59-cc2f-42d6-925d-7ee368097221_base_resized.jpg,300,メイク
+トリックハロウィン,https://booth.pm/ja/items/7497791,https://booth.pximg.net/aba17fe5-976a-4134-89a6-701795909d6e/i/7497791/31bbd23a-dd4e-4653-9464-d951cedfe071_base_resized.jpg,1900,衣装
+Twilight Lacefire,https://booth.pm/ja/items/7428288,https://booth.pximg.net/d3c78eb7-3f39-43d9-9c7b-323d47d47fc8/i/7428288/1a25fe13-5e9c-4afa-8f16-f1ae18e037d0_base_resized.jpg,200,メイク
+ストライプウェア,https://booth.pm/ja/items/7440409,https://booth.pximg.net/b1ebc319-be03-4b49-b49a-4a9b8606494f/i/7440409/4257534b-1209-45cd-93cd-31cbf836355e_base_resized.jpg,800,衣装
+ゆらゆら揺らめく『星ピン』,https://booth.pm/ja/items/7482819,https://booth.pximg.net/d5a60d26-1ec7-4f6a-b189-c02a8f58940c/i/7482819/7127aab0-3f09-4e47-8e5e-686d13e0d955_base_resized.jpg,360,アクセサリー
+Natural glam,https://booth.pm/ja/items/7487892,https://booth.pximg.net/d3c78eb7-3f39-43d9-9c7b-323d47d47fc8/i/7487892/057a9ba5-748c-458e-bc9d-6f571c2a7dc8_base_resized.jpg,300,メイク
+Deep_fog_Eye,http://booth.pm/ja/items/7388271,https://booth.pximg.net/e382a788-ad95-4d67-a4a2-34dea444396d/i/7388271/e804dd1b-643c-4197-9c82-ad762bcf6b35_base_resized.jpg,100,メイク
+vincent eye,https://booth.pm/ja/items/7477044,https://booth.pximg.net/4579b073-a06a-46c8-96b4-697d497763b4/i/7477044/5f98a618-a340-467c-b8aa-5b8602bb3a80_base_resized.jpg,250,メイク
+eye texture 18color ＆ makeup texture MZ9,https://booth.pm/ja/items/7490774,https://booth.pximg.net/671da9b7-4396-48b0-b6d8-0cb7fae279ce/i/7490774/690379ab-cbbe-4919-bd1a-d7e41b36890c_base_resized.jpg,300,メイク
+ちゅるきらあい,https://booth.pm/ja/items/7489550,https://booth.pximg.net/d02ff4f8-e685-447a-9371-85351e83619b/i/7489550/1f7b20a1-eedc-4c1a-8a66-92b13b1e8745_base_resized.jpg,300,メイク
+YamiKawaii,https://booth.pm/ja/items/7490237,https://booth.pximg.net/358f151e-2164-4218-880d-44cc914a42c2/i/7490237/8bd7f767-6475-4ea4-93de-ed40fdc60c53_base_resized.jpg,400,メイク
+厚底サンダル,https://booth.pm/ja/items/7461901,https://booth.pximg.net/bad12877-342b-4165-93c2-9cdd2db6bf07/i/7461901/f460e316-81f2-428c-93fb-d042e03c4043_base_resized.jpg,200,衣装
+Cotton Cloud,https://booth.pm/ja/items/7498658,https://booth.pximg.net/9e144e34-9b9c-427d-9944-453a7e5fb658/i/7498658/c6a63c3d-4cda-4265-9758-6e1ebdd2c0f5_base_resized.jpg,400,メイク
+EyeTexture,https://booth.pm/ja/items/7491254,https://booth.pximg.net/f1edf70e-f212-4033-a1b1-a9e8ae2759a0/i/7491254/bf4248ca-d72a-4e87-8356-0043e198f6a3_base_resized.jpg,350,メイク
+追加用ハンドジェスチャー,https://booth.pm/ja/items/7501448,https://booth.pximg.net/4bc3b1c1-4dca-426b-afa8-8a4fba4a0d12/i/7501448/97ccc3d9-77fc-41c6-886c-062ae8bab1fb_base_resized.jpg,400,ギミック
+CurseRose,https://booth.pm/ja/items/7501236,https://booth.pximg.net/26e68fab-0375-440d-9b49-cd67a7ce7e9c/i/7501236/f585222a-68c8-44b5-a09d-c53a3090270b_base_resized.jpg,700,アクセサリー
+eye texture and face animation set　HARUMI,https://booth.pm/ja/items/7491167,https://booth.pximg.net/d673aa44-d21e-4a95-bb58-dbc00613223f/i/7491167/53b733e5-9a5c-45d3-a201-d5a1ab5f1c7c_base_resized.jpg,100,メイク
+Floria,https://booth.pm/ja/items/7488421,https://booth.pximg.net/dd06db72-a504-4fd2-a117-9a0708877416/i/7488421/82028969-bccf-456f-9d95-3179fae89906_base_resized.jpg,1200,衣装
+さぶかる♥はーとびーと！,https://booth.pm/ja/items/7497195,https://booth.pximg.net/d565c5fe-a2a8-4c5b-9e38-602194f6ed31/i/7497195/53d7a03b-86c8-4322-9937-756457e75ab0_base_resized.jpg,400,メイク
+ピコピコ、追加ケモアニメーション,https://booth.pm/ja/items/7491794,https://booth.pximg.net/81a850a4-827a-46db-be61-1a6a47c7021d/i/7491794/78f8a024-5f2c-4159-b52d-b31509d28e06_base_resized.jpg,300,ギミック
+Gentle knitted suit,https://booth.pm/ja/items/7468159,https://booth.pximg.net/64994e6e-57f6-4e8d-9d01-e5e0a0910ea7/i/7468159/92f6949b-f1ce-45d7-9c62-56a4304e7c7b_base_resized.jpg,600,衣装
+PearlyRibbonNail,https://booth.pm/ja/items/7497323,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7497323/d8eaa86a-d35f-4061-b73d-a2f3bd0fcf3f_base_resized.jpg,200,ネイル
+しんぷるぷるあい,https://booth.pm/ja/items/7491107,https://booth.pximg.net/1f9653b1-3fb6-4023-b6ba-59e1004939f9/i/7491107/d9bbfcb9-2578-4c98-aa1d-cb29ad105886_base_resized.jpg,100,メイク
+MilkyEye,https://booth.pm/ja/items/7464375,https://booth.pximg.net/ec3bf503-3e2f-4e62-a9b0-93376a964c13/i/7464375/ee81fe98-5995-467f-a27e-4dde4d271cce_base_resized.jpg,300,メイク
+ふわわアイ,https://booth.pm/ja/items/7490657,https://booth.pximg.net/802bd6bc-17ae-4b64-92f5-587d7a61caf7/i/7490657/c9618889-fd77-4290-a495-d6376b1f14a6_base_resized.jpg,120,メイク
+Starter Nail Pack,https://booth.pm/ja/items/7485191,https://booth.pximg.net/0213a48a-42d5-4c65-893d-41be91bacf78/i/7485191/42a08190-e888-4ed9-8b7f-49c8b9aa3703_base_resized.jpg,850,ネイル
+RingIrisEye+Eyelash!,https://booth.pm/ja/items/7490204,https://booth.pximg.net/12fe93e4-e0a9-41df-83e6-62d27fce4e0e/i/7490204/4f3e95a4-cfe4-4c2e-8b72-658494935a7e_base_resized.jpg,300,メイク
+Sparkling Makeup Eye Texture,https://booth.pm/ja/items/7442500,https://booth.pximg.net/d3d6609b-3652-401b-aa37-c9fb4a337a03/i/7442500/69d2e652-1d4e-4776-ac5f-2992f549df78_base_resized.jpg,500,メイク
+Doki-doki Makeup Eye Texture,https://booth.pm/ja/items/7489983,https://booth.pximg.net/d3d6609b-3652-401b-aa37-c9fb4a337a03/i/7489983/dab14d43-7407-4597-8b71-9ced02f223e8_base_resized.jpg,300,メイク
+リリース記念セット,https://booth.pm/ja/items/7487310,https://booth.pximg.net/7608e135-4a77-494a-b2cf-86524edd0daa/i/7487310/0a81bb34-a330-4aa1-9162-982e6de7ee2d_base_resized.jpg,200,メイク
+🤍Angelic Lolita,https://booth.pm/ja/items/7480961,https://booth.pximg.net/808d048d-2b05-4f77-b372-5ecd45c931f6/i/7480961/0dfc6f50-4c7e-4d7f-ab4c-b737fa2dfcbf_base_resized.jpg,1400,衣装
+FlowerCandyEarring,https://booth.pm/ja/items/7474942,https://booth.pximg.net/012d4e78-5fdc-4fc1-ae8c-54fda502b287/i/7474942/39fd9e2e-df5f-4fdc-9d65-7d47d86e386c_base_resized.jpg,500,アクセサリー
+ClassicalJewelNail,https://booth.pm/ja/items/7471290,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7471290/905436b5-e4d1-437a-ab78-6c6750a9df88_base_resized.jpg,300,ネイル
+ぷまちゃんモチーフネイル,https://booth.pm/ja/items/7467949,https://booth.pximg.net/de3f7605-b437-4ca7-a210-a5ae3aa60a67/i/7467949/50f002b2-fd77-430e-8c94-c64029152d77_base_resized.jpg,400,ネイル
+SIMPLE CHIC,https://booth.pm/ja/items/7464851,https://booth.pximg.net/230333a7-24dd-4bb6-8092-bdec3c71adc3/i/7464851/6ecd6d73-d616-47da-bcca-e50cb1e89561_base_resized.jpg,300,衣装
+Autumn Series Special Set,https://booth.pm/ja/items/7456141,https://booth.pximg.net/589eec52-dce6-4dcd-8e76-ea4a4ef99891/i/7456141/2c6eab8a-4317-4e23-8dd3-f5346337c269_base_resized.jpg,800,メイク
+Autumn Classic,https://booth.pm/ja/items/7454989,https://booth.pximg.net/589eec52-dce6-4dcd-8e76-ea4a4ef99891/i/7454989/14954994-bbd8-4821-921c-2c83dd1bb730_base_resized.jpg,500,メイク
+MatJewelyNail,https://booth.pm/ja/items/7442638,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7442638/06b394ae-0c12-45fc-83dc-d55f5657ea18_base_resized.jpg,300,ネイル
+BekkoNail2025,https://booth.pm/ja/items/7416208,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7416208/64178a58-3f47-4f8a-baf7-012cae20c0f2_base_resized.jpg,300,ネイル
+病％EYE,https://booth.pm/ja/items/7409627,https://booth.pximg.net/1f9653b1-3fb6-4023-b6ba-59e1004939f9/i/7409627/3622d587-22df-4d3b-b75c-e6310ed21a27_base_resized.jpg,200,メイク
+KirikoNuanceNail,https://booth.pm/ja/items/7389057,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7389057/686a4af9-da28-42da-a3b0-204c97fb88eb_base_resized.jpg,300,ネイル
+ふわふわハーフツイン2,https://booth.pm/ja/items/7385967,https://booth.pximg.net/ef0955f0-2c68-4d94-af63-e476f083caf0/i/7385967/0aef9cda-de50-40d5-bfe2-f6a975210eb9_base_resized.jpg,1000,髪型
+SherbetNail,https://booth.pm/ja/items/7360928,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7360928/a3081c7d-cd2f-4f14-8b69-817fea87865a_base_resized.jpg,300,ネイル
+Palette Eyes,https://booth.pm/ja/items/7348668,https://booth.pximg.net/137a76c8-8f19-4fd6-ae68-a3b3bf65d3df/i/7348668/f3f7852b-9a84-44e9-92c5-daf45618abe1_base_resized.jpg,350,メイク
+Twilight Greige,https://booth.pm/ja/items/7355782,https://booth.pximg.net/2849244b-e108-4fd9-bc0f-bff4cbd923cc/i/7355782/3800f7e3-731e-49c5-aee8-5c07c1292236_base_resized.jpg,500,メイク
+ねむなで表情アニメーション,https://booth.pm/ja/items/7341688,https://booth.pximg.net/380f223c-71c9-40b4-92dd-20579c32f007/i/7341688/4e2f7438-1527-4273-ae10-0cd9a33abf1e_base_resized.jpg,500,ギミック
+SodaNail,https://booth.pm/ja/items/7336104,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7336104/b7960896-5142-4421-a941-5929136ac4d7_base_resized.jpg,400,ネイル
+Black Velvet Love　Nail,https://booth.pm/ja/items/7147613,https://booth.pximg.net/07576329-79ce-40c1-b81d-56d574310f51/i/7147613/bfdf0316-5703-41b6-9b6a-9ef86289eadf_base_resized.jpg,450,ネイル
+NebulaNail,https://booth.pm/ja/items/7275781,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7275781/0cb28913-5a72-416a-b9e4-260641bd8340_base_resized.jpg,300,ネイル
+YumekawaMagicNail,https://booth.pm/ja/items/7263316,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7263316/59c0191d-c0f9-475d-8e8b-243772917251_base_resized.jpg,300,ネイル
+Flower in the Dark,https://booth.pm/ja/items/7263319,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7263319/db602463-1585-4ed5-a21a-8a3d8b53e083_base_resized.jpg,300,ネイル
+FreshNail,https://booth.pm/ja/items/7251824,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7251824/1932ec10-7e13-4b77-a808-818f2b2294bf_base_resized.jpg,300,ネイル
+NatsumatsuriNail,https://booth.pm/ja/items/7225470,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7225470/08f43c5e-66bb-4cda-a219-731a026fca54_base_resized.jpg,300,ネイル
+TeaNuanceNail,https://booth.pm/ja/items/7196172,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7196172/ee6d289a-99bc-4562-945c-c11cf30bcb5f_base_resized.jpg,300,ネイル
+RoyalHeartNail,https://booth.pm/ja/items/7165321,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7165321/4c491b92-7747-4202-b44b-ac5ba72df0fd_base_resized.jpg,200,ネイル
+HeartChainNail,https://booth.pm/ja/items/7134765,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7134765/eeca6866-6476-4c64-9d25-c18a538718d2_base_resized.jpg,300,ネイル
+OnepointHeartNail,https://booth.pm/ja/items/7102199,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7102199/b2ff2efe-5654-45e3-94a7-cb67b8c89297_base_resized.jpg,300,ネイル
+RoseLaceNail,https://booth.pm/ja/items/7074200,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7074200/0cdbe772-0596-42bd-999e-eab0764e2e4a_base_resized.jpg,300,ネイル
+DropNail,https://booth.pm/ja/items/7016317,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7016317/1ebb4b02-4580-4dcf-9a32-b259afce8ea2_base_resized.jpg,300,ネイル
+ModernNail,https://booth.pm/ja/items/6976588,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6976588/0ea669e4-d536-4095-9457-247d83a56d61_base_resized.jpg,300,ネイル
+ルナール,https://booth.pm/ja/items/6975857,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6975857/df8428f0-fe18-4452-9576-ba672267f659_base_resized.jpg,300,ネイル
+GinghamHeartNail,https://booth.pm/ja/items/6959875,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6959875/d455d6de-ffef-40a8-af6f-7a554f6b9aae_base_resized.jpg,300,ネイル
+京狐,https://booth.pm/ja/items/6946477,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6946477/6b4389a1-f57f-4ee3-a790-453ecbd4692f_base_resized.jpg,300,ネイル
+MagicHourNail,https://booth.pm/ja/items/6931698,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6931698/367ce5d5-611d-4f04-88cb-508183517562_base_resized.jpg,300,ネイル
+AuroraMarbleNail,https://booth.pm/ja/items/6904222,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6904222/53326e05-4cd2-44a9-98a9-95ba227a924e_base_resized.jpg,300,ネイル
+シンプルアイ,https://booth.pm/ja/items/6871321,https://booth.pximg.net/e9745ce8-2d5d-4419-b1f6-5bc65ba05703/i/6871321/45e11cf5-a479-47b0-89ef-6adca366679c_base_resized.jpg,150,メイク
+ButterflyNail,https://booth.pm/ja/items/6869719,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6869719/7c96e666-5577-41f1-b58b-6ad2d3e2b869_base_resized.jpg,300,ネイル
+DaisyNail,https://booth.pm/ja/items/6842182,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6842182/0721b192-bb0d-47c3-b085-d22602cba339_base_resized.jpg,300,ネイル
+ChainGlasses,https://booth.pm/ja/items/6817796,https://booth.pximg.net/a615cef6-5a2b-47ae-9876-805ce3478c1e/i/6817796/7cc238f1-35ae-45e8-b5f4-2fdab989600e_base_resized.jpg,300,アクセサリー
+BlurHeartNail,https://booth.pm/ja/items/6800445,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6800445/2bfbdbb8-9043-47ff-955b-7773dffb94ab_base_resized.jpg,200,ネイル
+SakuraNail2025,https://booth.pm/ja/items/6769711,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6769711/64c34ad0-f06e-4c33-80a6-bfe68bcaf77b_base_resized.jpg,300,ネイル
+CitrusNail,https://booth.pm/ja/items/6742284,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6742284/e7d28995-868e-41a7-ac73-0151ce1ccc1e_base_resized.jpg,300,ネイル
+ChiaroNuanceNail,https://booth.pm/ja/items/6719417,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6719417/80104c4e-f3ca-40b4-8631-3e548371d5af_base_resized.jpg,200,ネイル
+AntiqueRingNail,https://booth.pm/ja/items/6691454,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6691454/4156ef84-d0a9-4385-bb90-dda7ef4f2421_base_resized.jpg,300,ネイル
+DarkChillNail,https://booth.pm/ja/items/6666844,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6666844/937bdd20-7f67-4d80-a5cd-979691ebbc12_base_resized.jpg,300,ネイル
+CheckerHeartNail,https://booth.pm/ja/items/6645492,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6645492/c1e863d1-275d-4d8b-8521-86538f56a08b_base_resized.jpg,300,ネイル
+LameNail,https://booth.pm/ja/items/6622230,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6622230/be4bc60c-3179-4706-ab2d-efaa3d23adbc_base_resized.jpg,300,ネイル
+PopHeartNail,https://booth.pm/ja/items/6597366,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6597366/f6079cb8-23cc-4eb9-b9a2-0f625c0b66f4_base_resized.jpg,300,ネイル
+LovelyNail,https://booth.pm/ja/items/6570174,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6570174/b1d9140d-94b9-4280-8978-106e6bb13ec2_base_resized.jpg,300,ネイル
+♥Fondant Love♥ Valentine eye texture,https://booth.pm/ja/items/6561976,https://booth.pximg.net/9e144e34-9b9c-427d-9944-453a7e5fb658/i/6561976/104a24eb-c55f-475d-92bd-ac27356a3ae5_base_resized.jpg,300,メイク
+水底EyeTexture,https://booth.pm/ja/items/6550636,https://booth.pximg.net/8ac473b6-c873-4d80-bae6-e99d4b48728a/i/6550636/c34d8f93-c4b5-4bbf-84ee-0c332c18e2ea_base_resized.jpg,200,メイク
+ChocoNail2025,https://booth.pm/ja/items/6546774,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6546774/2db4bade-b6b1-41dd-a165-80dfadd41b1d_base_resized.jpg,300,ネイル
+Silver Mirage eye texture ♦,https://booth.pm/ja/items/6542548,https://booth.pximg.net/9e144e34-9b9c-427d-9944-453a7e5fb658/i/6542548/5179294e-5cf8-4c64-8e51-6d892721310d_base_resized.jpg,100,メイク
+MilkyNail,https://booth.pm/ja/items/6522767,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6522767/b8ca87c8-1c6d-4844-9d54-0535dedecdcc_base_resized.jpg,300,ネイル
+CrackyNail,https://booth.pm/ja/items/6500495,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6500495/5e7aa6db-bc9f-409e-afe3-bfd92e0f6311_base_resized.jpg,300,ネイル
+MizuhikiNail,https://booth.pm/ja/items/6446019,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6446019/e0d1802c-ba7b-4f0b-97f2-33fc85fad100_base_resized.jpg,300,ネイル
+KenranNail,https://booth.pm/ja/items/6443779,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6443779/4c62828e-e8e0-4940-b0dd-136f70304abd_base_resized.jpg,300,ネイル
+SeityoNail,https://booth.pm/ja/items/6432506,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6432506/5a06287e-8965-4bc3-b6a7-d81f16cf000e_base_resized.jpg,300,ネイル
+IlluminationNail2,https://booth.pm/ja/items/6409364,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6409364/a4402200-53de-4947-a1d8-ca8f829f5d1b_base_resized.jpg,300,ネイル
+KnitCheckNail,https://booth.pm/ja/items/6405410,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6405410/11870bb1-9a8b-4914-9124-412712febbec_base_resized.jpg,300,ネイル
+CutieMarbleNail,https://booth.pm/ja/items/6381385,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6381385/014729a6-52b6-4bba-96e9-7cc2137ccad6_base_resized.jpg,300,ネイル
+WinterNightNail,https://booth.pm/ja/items/6334955,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6334955/6c748290-988a-4036-a5c2-466d40e80f0a_base_resized.jpg,300,ネイル
+WinterSkyNail,https://booth.pm/ja/items/6314649,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6314649/27846226-0d50-457d-a3cd-e044c97665f5_base_resized.jpg,300,ネイル
+RoseyNail,https://booth.pm/ja/items/6288895,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6288895/98bc375c-b37e-49ea-bbed-f4063cf68bfa_base_resized.jpg,300,ネイル
+TweedNail2,https://booth.pm/ja/items/6268936,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6268936/0b7cfc44-deb4-45db-813c-e3c76d1c293e_base_resized.jpg,300,ネイル
+SnowyNail,https://booth.pm/ja/items/6248459,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6248459/4f584e78-11e6-42bb-8b8e-edea34e9806e_base_resized.jpg,200,ネイル
+SpiderNail,https://booth.pm/ja/items/6222045,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6222045/376dcc88-2863-4e29-8391-07f15e0f1d6a_base_resized.jpg,300,ネイル
+VampireNail,https://booth.pm/ja/items/6213896,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6213896/5b554b76-a046-4df9-bd1f-ce3ed7f9ee4d_base_resized.jpg,300,ネイル
+LILITHYNail,https://booth.pm/ja/items/6204479,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6204479/59c820cd-c9c2-4a9b-9437-fce2d129090e_base_resized.jpg,500,ネイル
+PressedFlowerNail,https://booth.pm/ja/items/6178251,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6178251/1f30dc14-2554-4d2e-be04-2213dbb0ac68_base_resized.jpg,300,ネイル
+SpookyMagnetNail,https://booth.pm/ja/items/6158820,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6158820/6d942618-2fe8-4109-896f-b2ad05505ebb_base_resized.jpg,300,ネイル
+FruityNail,https://booth.pm/ja/items/6138074,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6138074/688ca496-8085-4f05-ad79-7cc29fb0521b_base_resized.jpg,300,ネイル
+AsagaoNail,https://booth.pm/ja/items/6114415,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6114415/049d249a-0d66-4f04-bbdc-55616a3cf92b_base_resized.jpg,300,ネイル
+MomijiNail,https://booth.pm/ja/items/6095287,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6095287/b5e8f1dc-bc6f-4e74-83ee-e98f25080003_base_resized.jpg,300,ネイル
+BekkoNail2,https://booth.pm/ja/items/6077304,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6077304/9002fecc-36f9-49a4-83f6-27ef6b7a2ef2_base_resized.jpg,300,ネイル
+PixelFancyNail,https://booth.pm/ja/items/6033803,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6033803/bd77a926-1c71-464f-b4de-562304013c01_base_resized.jpg,300,ネイル
+ShavedNuanceNail,https://booth.pm/ja/items/6016874,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/6016874/649cab55-5611-4626-a496-401d009063c5_base_resized.jpg,300,ネイル
+星月,https://booth.pm/ja/items/5991881,https://booth.pximg.net/a4799060-9bc3-4a0f-b197-9f5fc273a52f/i/5991881/a14bf9ab-7dff-4f9a-8ba7-804bdc7664bc_base_resized.jpg,350,メイク
+LineyVenusNail,https://booth.pm/ja/items/5990171,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5990171/4a26e180-f97e-4119-8ae4-adc1f1f75a9e_base_resized.jpg,400,ネイル
+BalloonNail,https://booth.pm/ja/items/5976965,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5976965/571237a9-b725-427d-ac0c-46d52efa0b98_base_resized.jpg,300,ネイル
+MarineNail,https://booth.pm/ja/items/5933843,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5933843/4bda9b9c-cd5d-427e-91d2-279247f6e960_base_resized.jpg,300,ネイル
+SkinnyFrenchNail,https://booth.pm/ja/items/5895870,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5895870/b1185083-13e5-4ad9-9e12-bae62058126b_base_resized.jpg,300,ネイル
+AjisaiNail2,https://booth.pm/ja/items/5827986,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5827986/2e7875dd-13b9-4614-b545-e47b79d70e16_base_resized.jpg,300,ネイル
+MusicNail,https://booth.pm/ja/items/5747906,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5747906/021d0d80-01de-412c-9490-3f2b68831651_base_resized.jpg,300,ネイル
+TulipNail,https://booth.pm/ja/items/5668205,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5668205/a87b5be5-806e-4080-ba0d-ec78a2dd123f_base_resized.jpg,500,ネイル
+LineyStellaNail,https://booth.pm/ja/items/5650185,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5650185/5d8dbcb9-0f61-40e8-abca-56be6b886f53_base_resized.jpg,400,ネイル
+BerryValentineNail,https://booth.pm/ja/items/5464516,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5464516/0812e2d0-7e9b-4f91-9ff8-a34592f65086_base_resized.jpg,500,ネイル
+NovemberNails,https://booth.pm/ja/items/5211109,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5211109/6ae1634b-6090-4572-9311-ed57dd8cd85d_base_resized.jpg,500,ネイル
+DullHalloweenNail,https://booth.pm/ja/items/5176920,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5176920/d50b13ec-6476-42b8-971c-bf9992eb9d9f_base_resized.jpg,300,ネイル
+OctoberNails,https://booth.pm/ja/items/5128965,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5128965/762279cf-029c-4ee1-a783-7346f5088694_base_resized.jpg,500,ネイル
+HimawariNail,https://booth.pm/ja/items/5022127,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/5022127/37c0adb1-3e4d-42bb-a063-f27d282cb19e_base_resized.jpg,300,ネイル
+SuisaiNail,https://booth.pm/ja/items/4922621,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4922621/32a8a08b-995d-4248-b6d7-c77066a0e7e7_base_resized.jpg,300,ネイル
+AjisaiNail,https://booth.pm/ja/items/4807912,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4807912/c3480b59-a11b-4918-a4c0-1781e564ed2b_base_resized.jpg,300,ネイル
+GrayishCheckNail,https://booth.pm/ja/items/4746457,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4746457/d02ff9bd-b1a7-4373-85ce-76959e4e67b2_base_resized.jpg,300,ネイル
+RainyNail,https://booth.pm/ja/items/4725264,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4725264/0c5c30ec-6764-48af-b14e-7118c9d19a3a_base_resized.jpg,300,ネイル
+FrozenNail,https://booth.pm/ja/items/3520104,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/3520104/b2af77d4-112f-4239-aa4d-5ed4ea9d39ee_base_resized.jpg,300,ネイル
+PearlyNail,https://booth.pm/ja/items/3330342,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/3330342/4d41b586-e040-4e36-9747-6fd647c051a9_base_resized.jpg,500,ネイル
+MarbleNail,https://booth.pm/ja/items/4438925,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4438925/5c3443c5-d30a-4904-8cd5-19e9ee1ea955_base_resized.jpg,300,ネイル
+TweedNail,https://booth.pm/ja/items/4431652,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4431652/d2f9f65f-32f4-4b6e-8b6b-d9129ab8c614_base_resized.jpg,300,ネイル
+MiyabiNail,https://booth.pm/ja/items/4428363,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4428363/130973d5-f69a-4d3e-896f-299fb74b5d72_base_resized.jpg,300,ネイル
+WinterNuanceNail,https://booth.pm/ja/items/4428280,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4428280/82848479-fde1-43b0-b565-9a65ca0fa9e1_base_resized.jpg,300,ネイル
+PopChristmasNail,https://booth.pm/ja/items/4417140,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4417140/459660f9-9b36-4c8f-8e47-5d2cecb72921_base_resized.jpg,300,ネイル
+HolidayNail,https://booth.pm/ja/items/4417173,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4417173/08d94e91-b56b-44ac-83ab-a03526701177_base_resized.jpg,300,ネイル
+SpookyNail,https://booth.pm/ja/items/4268035,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/4268035/33d9cf2e-1115-4f24-93bd-40c58d881f54_base_resized.jpg,300,ネイル
+MagicNail,https://booth.pm/ja/items/3704568,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/3704568/8014897a-73f2-4b40-af03-67ed34d41987_base_resized.jpg,500,ネイル
+ChocoNail,https://booth.pm/ja/items/3629400,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/3629400/f0045978-ac70-49ee-86f1-06b9827a1803_base_resized.jpg,300,ネイル
+Panda Accessories,https://arupaka001.booth.pm/items/6680176,https://booth.pximg.net/de3f7605-b437-4ca7-a210-a5ae3aa60a67/i/6680176/6f9f0e6e-9cbe-4a5f-851d-05ce2e7e62fc.png,400,アクセサリー
+Gesture Cam,https://booth.pm/ja/items/7511778,https://booth.pximg.net/575fed62-044d-4b71-b916-c1b35d382b91/i/7511778/5e185127-808d-4b6c-bad7-47a1a0aa2703_base_resized.jpg,800,ギミック
+FeatherHorn,https://booth.pm/ja/items/7394611,https://booth.pximg.net/30c76ef1-f0bd-4ab4-af40-97fc22afce52/i/7394611/c3bde047-acbb-4493-8c96-7a3f6571f3f1_base_resized.jpg,380,アクセサリー
+例の壺ギミック！,https://booth.pm/ja/items/7558244,https://booth.pximg.net/a8679631-062b-45a5-a265-a8832fdff6e2/i/7558244/8a5025ff-178d-4e3f-9643-2b7d05bdda61_base_resized.jpg,200,ギミック
+ぷまちゃんめんへらEye+MakeTEX,https://booth.pm/ja/items/7550420,https://booth.pximg.net/419b208e-9339-4617-a128-9b97b2b276d8/i/7550420/d2473911-3fec-4fc0-a55b-5020982b986d_base_resized.jpg,600,メイク
+最強部屋着 ,https://booth.pm/ja/items/7548249,https://booth.pximg.net/e11cacf0-bcec-4394-aadc-90482b86026b/i/7548249/a9cbe7dc-94b8-403d-a338-38832d005ace_base_resized.jpg,1400,衣装
+アストラルウィッチ,https://booth.pm/ja/items/7547747,https://booth.pximg.net/227034ee-0b65-400d-bd0a-b09949ccffa9/i/7547747/972aabd8-6a28-4ee4-b20e-53fdd23e9992_base_resized.jpg,1300,衣装
+DeepCrossNail,https://booth.pm/ja/items/7548362,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7548362/b46af34d-5d28-4328-b9c1-065645c3daac_base_resized.jpg,200,ネイル
+✧Luminare✧EyeTexture,https://booth.pm/ja/items/7532117,https://booth.pximg.net/16e4dd49-5564-49cd-9c6b-30f3c7722124/i/7532117/f86cb995-119f-4b76-a693-f4aefda39144_base_resized.jpg,300,メイク
+Wolfsbane eye texture,https://booth.pm/ja/items/7532846,https://booth.pximg.net/c461c1d9-fb0c-43ed-ba05-41f639997048/i/7532846/d65e5cb7-3ba2-48ab-bf10-8ae4e492371f_base_resized.jpg,400,メイク
+Luminous†Nigrum,https://booth.pm/ja/items/7542794,https://booth.pximg.net/14396ad6-e926-4a7f-942a-eaa08396e301/i/7542794/5fc26750-1aa2-4647-b351-99b1fd01c557_base_resized.jpg,1500,衣装
+Ephemeral Frost,https://booth.pm/ja/items/7536214,https://booth.pximg.net/575fed62-044d-4b71-b916-c1b35d382b91/i/7536214/61dd353c-d4c3-43e6-b154-ba458f4ea0f0_base_resized.jpg,600,アクセサリー
+うるちゅるまばたきシステム-UruBlink-,https://booth.pm/ja/items/7503666,https://booth.pximg.net/91eb641a-e05c-4bbe-b055-31b9acb4d2ee/i/7503666/232e3a97-f5f3-4a25-b799-968e56f799bb_base_resized.jpg,500,ギミック
+口ピアス,https://booth.pm/ja/items/7524036,https://booth.pximg.net/8ab8b09a-4854-4e18-bb8d-30995b9176f8/i/7524036/e9a3ad4a-bfe1-4067-ad08-2e1f2261f66f_base_resized.jpg,500,アクセサリー
+Cozy くしゅ♡ Loaf,https://booth.pm/ja/items/7516474,https://booth.pximg.net/f7265526-84e6-47a2-a5e1-3934b7576788/i/7516474/278d118f-4a50-4a1c-b43c-b87a9a675916_base_resized.jpg,700,衣装
+Bon*2 trois Hair,https://booth.pm/ja/items/7516481,https://booth.pximg.net/f7265526-84e6-47a2-a5e1-3934b7576788/i/7516481/e9ed9b5b-a3b7-4e70-a686-f906d116e654_base_resized.jpg,1000,髪型
+ぱふ knit Girl,https://booth.pm/ja/items/7516470,https://booth.pximg.net/f7265526-84e6-47a2-a5e1-3934b7576788/i/7516470/2890b089-a4b7-42fb-8627-4fc6bfeba238_base_resized.jpg,1200,衣装
+🥀𝐓𝐨𝐤𝐨𝐘𝐚𝐦𝐢𝐄𝐲𝐞🥀,https://booth.pm/ja/items/7494502,https://booth.pximg.net/afe8f8c6-492e-4d6c-a395-bc54aaec65b2/i/7494502/90e04d4d-79c6-48c5-a934-06ea4aa84089_base_resized.jpg,300,メイク
+PopHalloweenNail,https://booth.pm/ja/items/7521923,https://booth.pximg.net/48d71edd-198d-4a0e-b6b5-d1c84767281f/i/7521923/ca9504f7-4132-4e78-9bf7-db6e97a98d86_base_resized.jpg,200,ネイル
+Puma32Type❥動くまばたきFaceAnimations ⌖ ݁˚,https://booth.pm/ja/items/7412202,https://booth.pximg.net/5d35fe27-051f-4579-90b3-1149254f3071/i/7412202/a478252a-05f6-46e0-ba92-523c49a2cf1b_base_resized.jpg,900,メイク
+いたずらメイド,https://booth.pm/ja/items/7506561,https://booth.pximg.net/dfe3e7b0-7e4b-4353-9083-8af76f96029c/i/7506561/611cb1db-ad2e-45ee-8ae9-6b27305070ae_base_resized.jpg,1800,衣装
+Sweetly Loose,https://booth.pm/ja/items/7514805,https://booth.pximg.net/b122fe93-b92c-4d4e-a6c2-cbbf444b5607/i/7514805/93544264-c8d2-4cb5-adc3-d1a5e969c1b9_base_resized.jpg,800,衣装
+RimShadeなじませmask,https://booth.pm/ja/items/6644882,https://booth.pximg.net/f988fb85-ec75-42dd-af82-3deab50360ea/i/6644882/3df4f742-5190-4ae0-abed-cfbe510692cd_base_resized.jpg,0,メイク
+FouNuit♡eye,https://booth.pm/ja/items/7558577,https://booth.pximg.net/4579b073-a06a-46c8-96b4-697d497763b4/i/7558577/553c5143-721e-443d-8a67-2a5a73a0f01d_base_resized.jpg,0,メイク`;
+
+        // --- データ編集ここまで ---
+
+
+        // ここから下はサイトの機能に関するコードです。
+        const itemGrid = document.getElementById('item-grid');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFiltersContainer = document.getElementById('category-filters');
+        const noResultsMessage = document.getElementById('no-results');
+        let activeCategory = 'すべて';
+        let allItems = []; 
+        let bookmarkedItems = []; // お気に入りアイテム名を格納する配列
+
+        // --- お気に入り機能の関数 ---
+        // ページ読み込み時にローカルストレージからお気に入り情報を読み込む
+        function loadBookmarks() {
+            const savedBookmarks = localStorage.getItem('bookmarkedItems');
+            if (savedBookmarks) {
+                bookmarkedItems = JSON.parse(savedBookmarks);
+            }
+        }
+
+        // ローカルストレージにお気に入り情報を保存する
+        function saveBookmarks() {
+            localStorage.setItem('bookmarkedItems', JSON.stringify(bookmarkedItems));
+        }
+
+        // お気に入りボタンがクリックされたときの処理
+        function handleBookmarkClick(event) {
+            // data-item-name属性からアイテム名を取得
+            const itemName = event.currentTarget.dataset.itemName;
+            const itemIndex = bookmarkedItems.indexOf(itemName);
+
+            if (itemIndex > -1) {
+                // 既にお気に入りなら削除
+                bookmarkedItems.splice(itemIndex, 1);
+            } else {
+                // お気に入りでなければ追加
+                bookmarkedItems.push(itemName);
+            }
+            
+            saveBookmarks(); // 変更を保存
+            filterAndSearch(); // 表示を更新してハートの状態などを反映
+        }
+
+        // CSVデータをJSONオブジェクトの配列に変換する関数
+        function parseCSV(text) {
+            // 前後の空白と、空行を削除
+            const rows = text.trim().split(/\r?\n/).filter(row => row.trim() !== '');
+            
+            // 列の順番は固定とします
+            // 0:アイテム名, 1:ショップリンク, 2:写真リンク, 3:値段, 4:種類
+            return rows.map((row, index) => {
+                const columns = row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
+                const cleanedColumns = columns.map(col => col.replace(/^"|"$/g, ''));
+                return {
+                    id: index + 1,
+                    name: cleanedColumns[0] || "",
+                    link: cleanedColumns[1] || "",
+                    imageUrl: cleanedColumns[2] || "",
+                    price: cleanedColumns[3] || "価格情報なし",
+                    category: cleanedColumns[4] || "未分類"
+                };
+            }).filter(item => item.name); // アイテム名が空の行は除外
+        }
+        
+        // カテゴリボタンを生成する関数
+        function setupCategoryFilters() {
+            const uniqueCategories = [...new Set(allItems.map(item => item.category).filter(c => c))];
+            // 「お気に入り」ボタンをカテゴリに追加
+            const categories = ['すべて', 'お気に入り', ...uniqueCategories];
+            
+            categoryFiltersContainer.innerHTML = categories.map(category => `
+                <button 
+                    data-category="${category}" 
+                    class="category-btn px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${category === activeCategory ? 'bg-indigo-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}">
+                    ${category}
+                </button>
+            `).join('');
+        }
+        
+        // アイテムカードを生成して表示する関数
+        function renderItems(filteredItems) {
+            itemGrid.innerHTML = ''; // グリッドをクリア
+            if (filteredItems.length === 0 && csvData.trim() !== '') {
+                noResultsMessage.classList.remove('hidden');
+                itemGrid.classList.add('hidden');
+            } else {
+                noResultsMessage.classList.add('hidden');
+                itemGrid.classList.remove('hidden');
+            }
+
+            filteredItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-1 transition-transform duration-300 flex flex-col';
+                
+                const isBookmarked = bookmarkedItems.includes(item.name);
+                
+                card.innerHTML = `
+                    <div class="relative">
+                        <img src="${item.imageUrl}" alt="${item.name}" class="w-full h-48 object-cover" onerror="this.onerror=null;this.src='https://placehold.co/400x300/1f2937/6b7280?text=Image+Not+Found';">
+                        <span class="absolute top-2 right-2 bg-indigo-600 text-white text-xs font-semibold px-2 py-1 rounded-full">${item.category}</span>
+                    </div>
+                    <div class="p-4 flex flex-col flex-grow">
+                        <div class="flex justify-between items-start mb-2">
+                             <h3 class="text-lg font-bold text-white flex-grow pr-2">${item.name}</h3>
+                             <button class="bookmark-btn flex-shrink-0 p-1 rounded-full hover:bg-gray-700 transition-colors" data-item-name="${item.name}" title="お気に入りに追加">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="${isBookmarked ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 21l-7.682-7.682a4.5 4.5 0 010-6.364z" class="${isBookmarked ? 'text-pink-500' : 'text-gray-400 hover:text-white'}"/>
+                                </svg>
+                             </button>
+                        </div>
+                        <div class="flex justify-between items-center mt-auto pt-2">
+                            <span class="text-xl font-bold text-indigo-400">${item.price}</span>
+                            <a href="${item.link}" target="_blank" rel="noopener noreferrer" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition-colors duration-300">
+                                詳細を見る
+                            </a>
+                        </div>
+                    </div>
+                `;
+                itemGrid.appendChild(card);
+            });
+
+            // 表示されたすべての「お気に入り」ボタンにクリックイベントを設定
+            document.querySelectorAll('.bookmark-btn').forEach(btn => {
+                btn.addEventListener('click', handleBookmarkClick);
+            });
+        }
+
+        // 検索とフィルタリングを実行する関数
+        function filterAndSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            
+            let filtered = allItems;
+
+            // カテゴリで絞り込み (お気に入りフィルタを先に追加)
+            if (activeCategory === 'お気に入り') {
+                filtered = allItems.filter(item => bookmarkedItems.includes(item.name));
+            } else if (activeCategory !== 'すべて') {
+                filtered = allItems.filter(item => item.category === activeCategory);
+            }
+
+            // 検索ワードで絞り込み
+            if (searchTerm) {
+                filtered = filtered.filter(item => 
+                    item.name.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            renderItems(filtered);
+        }
+
+        // カテゴリボタンのクリックイベント
+        categoryFiltersContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('category-btn')) {
+                activeCategory = e.target.dataset.category;
+                
+                // ボタンのアクティブ状態を更新
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.remove('bg-indigo-600', 'text-white');
+                    btn.classList.add('bg-gray-700', 'text-gray-300', 'hover:bg-gray-600');
+                });
+                e.target.classList.add('bg-indigo-600', 'text-white');
+                e.target.classList.remove('bg-gray-700', 'text-gray-300', 'hover:bg-gray-600');
+                
+                filterAndSearch();
+            }
+        });
+
+        // 検索入力イベント
+        searchInput.addEventListener('keyup', filterAndSearch);
+
+        // 初期表示
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBookmarks(); // ★ ページ表示時にまずお気に入り情報を読み込む
+
+            if (!csvData || csvData.trim() === '') {
+                 itemGrid.innerHTML = `<div class="col-span-full text-center p-8 bg-yellow-900/20 rounded-lg">
+                                        <h3 class="text-xl font-bold text-yellow-400 mb-2">データがありません</h3>
+                                        <p class="text-yellow-300">HTMLファイルを編集して、CSVデータを貼り付けてください。</p>
+                                      </div>`;
+                return;
+            }
+            allItems = parseCSV(csvData);
+            setupCategoryFilters();
+            renderItems(allItems);
+        });
+    </script>
+</body>
+</html>
+
